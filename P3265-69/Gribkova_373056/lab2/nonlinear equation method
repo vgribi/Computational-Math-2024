@@ -1,0 +1,172 @@
+import matplotlib.pyplot as plt
+from math import sin, e
+
+
+
+
+# Функция для вычисления корня уравнения методом бисекции
+def bisection_method(function, left_bound, right_bound, tolerance):
+   # Пока разница между границами больше допустимой погрешности
+   while abs(left_bound - right_bound) > tolerance:
+       # Находим середину интервала
+       midpoint = (left_bound + right_bound) / 2
+       # Проверка знака произведения значений функции на концах интервала
+       if function(left_bound) * function(midpoint) > 0:
+           left_bound = midpoint  # Если знаки одинаковы, сдвигаем левую границу
+       else:
+           right_bound = midpoint  # Если знаки разные, сдвигаем правую границу
+   return (left_bound + right_bound) / 2  # Возвращаем середину интервала как корень
+
+
+
+
+# Функция для вычисления корня уравнения методом хорд
+def chord_method(function, left_bound, right_bound, tolerance):
+   while abs(left_bound - right_bound) > tolerance:
+       # Вычисляем точку пересечения хорды с осью x
+       midpoint = (left_bound * function(right_bound) - right_bound * function(left_bound)) / (
+                   function(right_bound) - function(left_bound))
+       if function(left_bound) * function(midpoint) > 0:
+           left_bound = midpoint  # Если знаки одинаковы, сдвигаем левую границу
+       else:
+           right_bound = midpoint  # Если знаки разные, сдвигаем правую границу
+   # Возвращаем точку пересечения хорды как корень
+   return (left_bound * function(right_bound) - right_bound * function(left_bound)) / (
+               function(right_bound) - function(left_bound))
+
+
+
+
+# Функция для вычисления корня уравнения методом секущих
+def secant_method(function, initial_guess, tolerance):
+   # Вычисляем первую приближенную точку
+   next_guess = initial_guess - function(initial_guess) / derivative_at_point(function, initial_guess)
+   # Пока разница между текущим и предыдущим приближением больше допустимой погрешности
+   while abs(next_guess - initial_guess) > tolerance:
+       # Вычисляем следующее приближение
+       temp = next_guess - (next_guess - initial_guess) * function(next_guess) / (
+                   function(next_guess) - function(initial_guess))
+       initial_guess, next_guess = next_guess, temp  # Обновляем приближения
+   return next_guess  # Возвращаем текущее приближение как корень
+
+
+
+
+# Функция для вычисления корня уравнения методом простой итерации
+def simple_iteration_method(function, initial_guess, left_bound, right_bound, tolerance):
+   max_derivative = 0
+   current_x = left_bound
+   # Поиск максимального значения производной функции на интервале
+   while current_x < right_bound:
+       max_derivative = max(max_derivative, abs(derivative_at_point(function, current_x)))
+       current_x += tolerance
+
+
+   # Выбор шага итерации в зависимости от знака производной
+   step = -1 / max_derivative if derivative_at_point(function, left_bound) > 0 else 1 / max_derivative
+   # Определение итерационной функции
+   iteration_function = lambda x: x + step * function(x)
+
+
+   current_x = iteration_function(initial_guess)
+   # Пока разница между текущим и предыдущим приближением больше допустимой погрешности
+   while abs(current_x - initial_guess) > tolerance:
+       current_x, initial_guess = iteration_function(current_x), current_x  # Обновляем приближения
+   return current_x  # Возвращаем текущее приближение как корень
+
+
+
+
+# Функция для проверки существования единственного корня на интервале
+def verify(function, left_bound, right_bound, tolerance=0.00001):
+   # Проверка условий для существования единственного корня на интервале
+   if function(left_bound) * function(right_bound) < 0 and derivative_at_point(function, left_bound) * derivative_at_point(function, right_bound) > 0:
+       current_x = left_bound
+       # Проверка знака производной функции на интервале
+       while current_x < right_bound:
+           if derivative_at_point(function, left_bound) * derivative_at_point(function, current_x) <= 0:
+               return False  # Если производная меняет знак, возвращаем False
+           current_x += tolerance
+       return True  # Если производная не меняет знак, возвращаем True
+   return False  # Если начальные условия не выполнены, возвращаем False
+
+
+
+
+# Функция для вычисления производной функции в точке
+def derivative_at_point(function, point, dx=0.000001):
+   return (function(point + dx) - function(point)) / dx  # Используем метод конечных разностей
+
+
+
+
+# Функция для построения графика функции и её корня
+def draw_plot(function, left_bound, right_bound, root, step):
+   x_values = []
+   y_values = []
+   current_x = left_bound
+   # Генерация значений функции на заданном интервале
+   while current_x < right_bound:
+       x_values.append(current_x)
+       y_values.append(function(current_x))
+       current_x += step
+   plt.xlabel("X")  # Подпись оси X
+   plt.ylabel("Y")  # Подпись оси Y
+   plt.plot(x_values, y_values, 'g')  # Построение графика функции
+   plt.annotate('x', xy=(root, function(root)))  # Аннотирование корня на графике
+   plt.plot([left_bound, right_bound], [0, 0], 'b')  # Построение оси X
+   plt.show()  # Отображение графика
+
+
+
+
+# Вывод доступных функций для выбора
+print('Варианты функций:')
+print('1. x ** 3 + 2.84 * x ** 2 - 5.606 * x - 14.766')
+print('2. x ** 3 - x + 4')
+print('3. sin(x ** 2) + x + 2')
+print('4. x ** 3 - 0.1 * x ** 2 + 0.5')
+print('Введите номер функции (1 или 2 или 3 или 4): ')
+case_number = input()
+while case_number not in {'1', '2', '3', '4'}:
+   print('Введите номер функции (1 или 2 или 3 или 4):')
+   case_number = input()
+
+
+case_number = int(case_number)
+tolerance = 0.0001  # Задаем значение допустимой погрешности
+if case_number == 1:
+   function = lambda x: x ** 3 + 2.84 * x ** 2 - 5.606 * x - 14.766
+   isolation_intervals = [(-3.2, -3), (-2.2, -2), (2.2, 2.4)]
+   left_bound, right_bound = isolation_intervals[2]
+elif case_number == 2:
+   function = lambda x: x ** 3 - x + 4
+   left_bound, right_bound = -2, -1
+elif case_number == 3:
+   function = lambda x: sin(x ** 2) + x + 2
+   left_bound, right_bound = -2, -1.6
+else:
+   function = lambda x: x ** 3 - 0.1 * x ** 2 + 0.5
+   left_bound, right_bound = 0.6, 1
+
+
+user_input = input('Введите "Y" если хотите задать [a; b]: ')
+if user_input == 'Y':
+   while True:
+       print('Введите a и b через пробел:')
+       try:
+           left_bound, right_bound = map(float, input().split())  # Ввод значений интервала
+       except Exception:
+           continue
+       break
+
+
+initial_guess = (left_bound + right_bound) / 2  # Начальное приближение как середина интервала
+print("Проверка:", verify(function, left_bound, right_bound))  # Проверка существования единственного корня
+if not verify(function, left_bound, right_bound):
+   exit(0)  # Выход, если корень не единственный
+print("Метод бисекции:", bisection_method(function, left_bound, right_bound, tolerance))
+print("Метод секущих:", secant_method(function, initial_guess, tolerance))
+print("Метод простой итерации:", simple_iteration_method(function, initial_guess, left_bound, right_bound, tolerance))
+root = bisection_method(function, left_bound, right_bound, tolerance)  # Вычисление корня методом бисекции
+draw_plot(function, -4, 3, root, 0.001)  # Построение графика функции и корня
