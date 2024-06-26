@@ -1,0 +1,204 @@
+from random import randint
+
+
+def read_data_from_file():
+   # Функция для чтения данных из файла 'input.txt'
+   with open('input.txt') as file:
+       size = int(file.readline())  # Чтение размерности матрицы
+       file.readline()  # Пропуск пустой строки
+       # Чтение матрицы A
+       matrix_a = [
+           list(map(float, file.readline().split()))
+           for _ in range(size)
+       ]
+       file.readline()  # Пропуск пустой строки
+       # Чтение вектора B
+       vector_b = list(map(float, file.readline().split()))
+       return size, matrix_a, vector_b
+
+
+
+
+def generate_random_matrix(size):
+   # Функция для генерации случайной квадратной матрицы размера size и случайного вектора
+   min_value = -1000  # Минимальное значение для случайных чисел
+   max_value = 1000  # Максимальное значение для случайных чисел
+
+
+   # Генерация случайной матрицы A
+   matrix_a = [
+       [randint(min_value, max_value) for _ in range(size)]
+       for _ in range(size)
+   ]
+
+
+   # Генерация случайного вектора B
+   vector_b = [randint(min_value, max_value) for _ in range(size)]
+
+
+   return matrix_a, vector_b
+
+
+
+
+def get_user_input():
+   # Функция для получения данных от пользователя и генерации матрицы и вектора
+
+
+   random_flag = 'RANDOM'  # Ключевое слово для генерации случайных данных
+
+
+   # Запрос у пользователя размерности матрицы
+   size_input = input('Введите размерность матрицы (n): ').strip()
+   while not size_input.isdigit() or int(size_input) < 1 or int(size_input) > 20:
+       print('-' * 50)
+       print('n должно быть числом на отрезке [1;20]')
+       size_input = input('Введите размерность матрицы (n): ').strip()
+
+
+   size = int(size_input)
+
+
+   # Запрос у пользователя, хочет ли он сгенерировать случайную матрицу
+   random_choice = input(f'Введите "{random_flag}" для генерации случайной матрицы (A и B): ')
+   if random_choice == 'RANDOM':
+       # Генерация случайной матрицы и вектора
+       matrix_a, vector_b = generate_random_matrix(size)
+       print('Сгенерированная матрица: ')
+       for i in range(size):
+           print(*matrix_a[i], '|', vector_b[i], sep='\t')
+       print('-' * 50)
+   else:
+       # Ввод матрицы A от пользователя
+       print('Введите элементы матрицы A:')
+       matrix_a = []
+       for i in range(size):
+           valid_input = False
+           while not valid_input:
+               try:
+                   # Запрос строки матрицы
+                   print(f'Введите строку ({i}) (n чисел): ')
+                   row = list(map(float, input().split()))
+                   assert len(row) == size  # Проверка, что введено нужное количество элементов
+                   valid_input = True
+               except Exception:
+                   print("Ошибка ввода. Попробуйте еще раз.")
+                   pass
+           matrix_a.append(row)
+
+
+       # Ввод вектора B от пользователя
+       print('Введите элементы вектора B:')
+       valid_input = False
+       while not valid_input:
+           try:
+               # Запрос строки вектора
+               print('Введите строку (n чисел): ')
+               vector_b = list(map(float, input().split()))
+               assert len(vector_b) == size  # Проверка, что введено нужное количество элементов
+               valid_input = True
+           except Exception:
+               print("Ошибка ввода. Попробуйте еще раз.")
+               pass
+
+
+   return size, matrix_a, vector_b
+
+
+
+
+def calculate_determinant(triangular_matrix, swaps):
+   # Функция для вычисления определителя треугольной матрицы с учетом перестановок строк
+   determinant = 1
+   for i in range(len(triangular_matrix)):
+       determinant *= triangular_matrix[i][i]  # Произведение диагональных элементов
+   # Учет количества перестановок строк: каждая перестановка меняет знак определителя
+   return (-1) ** swaps * determinant
+
+
+
+
+def gaussian_elimination(matrix_a, vector_b):
+   # Функция для решения системы уравнений методом Гаусса
+   size = len(matrix_a)
+   x = [None] * size  # Вектор решения
+   swap_count = 0  # Счетчик перестановок строк
+
+
+   # Прямой ход метода Гаусса: приведение к треугольному виду
+   for i in range(0, size - 1):
+       # Проверка и перестановка строк для исключения нулевого ведущего элемента
+       while matrix_a[i][i] == 0:
+           matrix_a = matrix_a[:i] + matrix_a[i + 1:] + [matrix_a[i]]  # Перестановка строк
+           vector_b = vector_b[:i] + vector_b[i + 1:] + [vector_b[i]]  # Перестановка элементов вектора
+           swap_count += 1  # Увеличение счетчика перестановок
+
+
+       # Обнуление элементов ниже главной диагонали
+       for k in range(i + 1, size):
+           factor = matrix_a[k][i] / matrix_a[i][i]  # Вычисление коэффициента для обнуления
+           matrix_a[k][i] = 0  # Обнуление элемента
+           for j in range(i + 1, size):
+               matrix_a[k][j] = matrix_a[k][j] - factor * matrix_a[i][j]  # Обновление строки
+           vector_b[k] = vector_b[k] - factor * vector_b[i]  # Обновление элемента вектора
+
+
+   # Обратный ход метода Гаусса: нахождение решений системы
+   for i in range(size - 1, -1, -1):
+       sum_ax = 0  # Сумма произведений коэффициентов и найденных решений
+       for j in range(i + 1, size):
+           sum_ax += matrix_a[i][j] * x[j]  # Вычисление суммы
+       x[i] = (vector_b[i] - sum_ax) / matrix_a[i][i]  # Вычисление неизвестного
+
+
+   return x, swap_count, matrix_a, vector_b
+
+
+
+
+def calculate_residuals(matrix_a, vector_b, solution):
+   # Функция для вычисления вектора невязок
+   size = len(matrix_a)
+   residuals = [0] * size
+   for i in range(size):
+       for j in range(size):
+           residuals[i] += matrix_a[i][j] * solution[
+               j]  # Вычисление скалярного произведения строки матрицы и вектора решения
+       residuals[i] -= vector_b[i]  # Вычитание соответствующего элемента вектора B
+   return residuals
+
+
+
+
+# Загрузка данных из файла
+n, a, b = read_data_from_file()
+
+
+# Сохранение первоначальных значений для вычисления невязок
+original_a = [row[:] for row in a]  # Копирование матрицы A
+original_b = b[:]  # Копирование вектора B
+
+
+# Решение системы уравнений методом Гаусса
+solution, swap_count, triangular_a, updated_b = gaussian_elimination(a, b)
+
+
+# Вычисление определителя треугольной матрицы
+determinant = calculate_determinant(triangular_a, swap_count)
+print('Определитель: ', determinant)
+
+
+# Вывод треугольной матрицы и обновленного вектора B
+print('Треугольная матрица: ')
+for i in range(n):
+   print(*triangular_a[i], '|', updated_b[i], sep='\t')
+print('-' * 50)
+
+
+# Вывод решения системы уравнений
+print('Вектор неизвестных: ', *map(lambda xi: round(xi, 5), solution))
+
+
+# Вычисление и вывод вектора невязок
+residuals = calculate_residuals(original_a, original_b, solution)
+print('Вектор невязок: ', *residuals)
