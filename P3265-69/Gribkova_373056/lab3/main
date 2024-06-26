@@ -1,0 +1,245 @@
+import math
+
+
+class IntegralOfFunction:
+   def __init__(self):
+       # Инициализация параметров и выбор метода ввода данных
+       self.func_num = None
+       self.method_num = None
+       self.a = None
+       self.b = None
+       self.epsilon = None
+       self.nmin = None
+       self.k = None
+
+
+       # Запрос способа ввода данных
+       choice = self.input_method()
+       if choice == '1':
+           self.get_data_from_file()
+       else:
+           self.get_data_input()
+
+
+   def func1(self, x):
+       # Первая функция: 5x³ - 2x² + x - 14
+       return 5 * x**3 - 2 * x**2 + x - 14
+
+
+   def func2(self, x):
+       # Вторая функция: 0.3x⁴ + 0.7x² - 0.4
+       return 0.3 * x**4 + 0.7 * x**2 - 0.4
+
+
+   def func3(self, x):
+       # Третья функция: x³
+       return x**3
+
+
+   def func4(self, x):
+       # Четвертая функция: 3x² + 8x - 7
+       return 3 * x**2 + 8 * x - 7
+
+
+   def get_function(self):
+       # Запрос выбора функции у пользователя
+       print("Выберите функцию")
+       print(" 1) 5x³ - 2x² + x - 14")
+       print(" 2) 0.3x⁴ + 0.7x² - 0.4")
+       print(" 3) x³")
+       print(" 4) 3x² + 8x -7")
+       print("Выберите функцию из списка")
+       self.func_num = int(input())
+       while self.func_num < 1 or self.func_num > 4:
+           print("Выберите функцию из списка")
+           self.func_num = int(input())
+
+
+   def get_method(self):
+       # Запрос выбора метода численного интегрирования у пользователя
+       print("Выберите метод")
+       print(" 1) Метод левых прямоугольников")
+       print(" 2) Метод средних прямоугольников")
+       print(" 3) Метод правых прямоугольников")
+       print(" 4) Метод трапеций")
+       print(" 5) Метод Симпсона")
+       print("Выберите метод из списка")
+       self.method_num = int(input())
+       while self.method_num < 1 or self.method_num > 5:
+           print("Выберите метод из списка")
+           self.method_num = int(input())
+
+
+   def get_data_input(self):
+       # Получение входных данных от пользователя
+       self.get_function()
+       self.get_method()
+       print("Введите пределы интегрирования:")
+       self.a = float(input())
+       self.b = float(input())
+       print("Введите точность вычисления: ")
+       self.epsilon = float(input())
+       print("Введите начальное значение числа разбиения:")
+       self.nmin = int(input())
+
+
+   def get_data_from_file(self):
+       # Чтение входных данных из файла
+       try:
+           with open('data.txt', 'r') as file:
+               data = file.read().split()
+               self.func_num = int(data[0])
+               self.method_num = int(data[1])
+               self.a = float(data[2])
+               self.b = float(data[3])
+               self.epsilon = float(data[4])
+               self.nmin = int(data[5])
+       except FileNotFoundError:
+           raise RuntimeError("Файл не доступен")
+
+
+   def input_method(self):
+       # Запрос способа ввода данных: из файла или вручную
+       print("Взять исходные данные из файла (1) или ввести с клавиатуры (2)?")
+       print("Режим ввода: ")
+       choice = input().strip()
+       while choice != '1' and choice != '2':
+           print("Введите (1) или (2) для выбора способа ввода.")
+           print("Режим ввода: ")
+           choice = input().strip()
+       return choice
+
+
+   def apply(self, x):
+       # Применение выбранной функции к x
+       if self.func_num == 1:
+           return self.func1(x)
+       elif self.func_num == 2:
+           return self.func2(x)
+       elif self.func_num == 3:
+           return self.func3(x)
+       else:
+           return self.func4(x)
+
+
+   def left_rectangle_method(self, a, b, h):
+       # Метод левых прямоугольников
+       res = 0
+       i = a
+       while i < b - h/2:
+           res += h * self.apply(i)
+           i += h
+       return res
+
+
+   def right_rectangle_method(self, a, b, h):
+       # Метод правых прямоугольников
+       res = 0
+       i = a + h
+       while i < b + h/2:
+           res += h * self.apply(i)
+           i += h
+       return res
+
+
+   def middle_rectangle_method(self, a, b, h):
+       # Метод средних прямоугольников
+       res = 0
+       i = a + h/2
+       while i < b:
+           res += h * self.apply(i)
+           i += h
+       return res
+
+
+   def trapezoid_method(self, a, b, h):
+       # Метод трапеций
+       sum_val = 0
+       i = a + h
+       while i < b - h/2:
+           sum_val += self.apply(i)
+           i += h
+       return h * ((self.apply(a) + self.apply(b)) / 2 + sum_val)
+
+
+   def simpson_method(self, a, b, h):
+       # Метод Симпсона
+       sum1 = 0
+       sum2 = 0
+       i = a + h
+       while i < b - h/2:
+           sum1 += self.apply(i)
+           i += 2 * h
+       i = a + 2 * h
+       while i < b - h/2:
+           sum2 += self.apply(i)
+           i += 2 * h
+       return h / 3 * (self.apply(a) + 4 * sum1 + 2 * sum2 + self.apply(b))
+
+
+   def sup_method(self, a, b, h):
+       # Выбор метода численного интегрирования в зависимости от выбора пользователя
+       if self.method_num == 1:
+           self.k = 2
+           return self.left_rectangle_method(a, b, h)
+       elif self.method_num == 2:
+           self.k = 2
+           return self.right_rectangle_method(a, b, h)
+       elif self.method_num == 3:
+           self.k = 2
+           return self.middle_rectangle_method(a, b, h)
+       elif self.method_num == 4:
+           self.k = 2
+           return self.trapezoid_method(a, b, h)
+       else:
+           self.k = 4
+           return self.simpson_method(a, b, h)
+
+
+   def runge_rule(self, res, res2):
+       # Правило Рунге для оценки погрешности
+       return abs(res2 - res) / (2**self.k - 1)
+
+
+   def sub_result(self, a, b):
+       # Подвычисления для интеграла
+       result = {'res': None, 'res2': None, 'n': self.nmin}
+       while True:
+           h = abs(b - a) / result['n']
+           result['res'] = self.sup_method(a, b, h)
+           result['n'] *= 2
+           result['res2'] = self.sup_method(a, b, h)
+           if abs(result['res2'] - result['res']) <= self.epsilon:
+               break
+       return result
+
+
+   def result_integral(self):
+       # Вычисление и вывод результата интегрирования
+       result = self.sub_result(self.a, self.b)
+       print(f"Значение интеграла: {result['res']}")
+       print(f"Число разбиения: {result['n'] // 2}")
+       print(f"Погрешность: {self.runge_rule(result['res'], result['res2'])}")
+
+
+def main():
+   # Основная функция, запрашивающая повторное использование других методов
+   integral = IntegralOfFunction()
+   integral.result_integral()
+   while True:
+       print("Попробуйте с другими методами (+/-) ?")
+       print("Режим ввода: ")
+       choice = input().strip()
+       while choice != '1' and choice != '2':
+           print("Введите (1) или (2) для выбора способа ввода.")
+           print("Режим ввода: ")
+           choice = input().strip()
+       if choice == '1':
+           integral.get_method()
+           integral.result_integral()
+       else:
+           break
+
+
+if __name__ == "__main__":
+   main()
